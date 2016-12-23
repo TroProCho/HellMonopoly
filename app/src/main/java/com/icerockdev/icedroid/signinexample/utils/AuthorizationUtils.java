@@ -2,6 +2,7 @@ package com.icerockdev.icedroid.signinexample.utils;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 public class AuthorizationUtils
 {
@@ -14,12 +15,12 @@ public class AuthorizationUtils
 	 * @param context current context
 	 */
 
-	public static void setAuthorized(Context context)
+	public static void setAuthorized(Context context, String login)
 	{
 
 		context.getSharedPreferences(LOGIN_PREFERENCES, Context.MODE_PRIVATE)
 				.edit()
-				.putBoolean(PREFERENCES_AUTHORIZED_KEY, true)
+				.putString(PREFERENCES_AUTHORIZED_KEY, login)
 				.apply();
 	}
 
@@ -33,7 +34,7 @@ public class AuthorizationUtils
 	{
 		context.getSharedPreferences(LOGIN_PREFERENCES, Context.MODE_PRIVATE)
 				.edit()
-				.putBoolean(PREFERENCES_AUTHORIZED_KEY, false)
+				.remove(PREFERENCES_AUTHORIZED_KEY)
 				.apply();
 	}
 
@@ -46,7 +47,8 @@ public class AuthorizationUtils
 
 	public static boolean isAuthorized(Context context)
 	{
-		return context.getSharedPreferences(LOGIN_PREFERENCES, Context.MODE_PRIVATE)
-				.getBoolean(PREFERENCES_AUTHORIZED_KEY, false);
+		SharedPreferences sp = context.getSharedPreferences(LOGIN_PREFERENCES, Context.MODE_PRIVATE);
+		String login = sp.getString(PREFERENCES_AUTHORIZED_KEY, "");
+		return !login.isEmpty();
 	}
 }

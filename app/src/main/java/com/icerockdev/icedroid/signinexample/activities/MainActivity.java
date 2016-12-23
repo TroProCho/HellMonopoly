@@ -23,8 +23,8 @@ public class MainActivity extends AppCompatActivity
 		setContentView(R.layout.activity_main);
 
 //		Here is a checkpoint if the user is authorized.
-
 		if (!AuthorizationUtils.isAuthorized(this)) {
+
 			onLogout();
 			return;
 		}
