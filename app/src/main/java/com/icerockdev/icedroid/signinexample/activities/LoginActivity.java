@@ -121,7 +121,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             } catch (IOException e) {
                 publishProgress("Server not respond");
             }
-            response = "{Type:1,Status:true}";
             return response;
         }
 

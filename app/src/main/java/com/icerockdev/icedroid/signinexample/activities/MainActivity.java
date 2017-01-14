@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextInputLayout mNumberOfPlayers;
     private Button mStartGameButton;
     private Handler handler;
-    private Thread networkConnetion;
+    private Thread networkConnection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +54,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mStartGameButton = (Button) findViewById(R.id.start_game_button);
         mStartGameButton.setOnClickListener(this);
+
+        Button stopSearchingGame = (Button) findViewById(R.id.stop_searching_game_button);
+        stopSearchingGame.setOnClickListener(this);
 
         handler = new Handler();
     }
@@ -87,13 +90,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onStartGame(boolean isStartGame) {
-        mStartGameButton.setEnabled(true);
+        stopNetworkConnection();
         if (isStartGame) {
             //This method for starts the game
 
 		    /*Intent game = new Intent(this, Game.class);
             startActivity(game);*/
-		    finish();
+            finish();
         }
     }
 
@@ -109,12 +112,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         onLogout();
                     }
 
-                    networkConnetion = new NetworkConnection(login, Integer.parseInt(mNumberOfPlayers.getEditText().getText().toString()));
-                    networkConnetion.start();
+                    networkConnection = new NetworkConnection(login, Integer.parseInt(mNumberOfPlayers.getEditText().getText().toString()));
+                    networkConnection.start();
                 } else {
                     setError();
                 }
                 break;
+            }
+            case R.id.stop_searching_game_button: {
+                stopNetworkConnection();
             }
         }
     }
@@ -130,7 +136,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void run() {
-
             String response = null;
             try {
                 Socket client = new Socket(NetworkProtocol.SERVER_IP_V4, NetworkProtocol.SERVER_PORT);
@@ -161,10 +166,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             response = null;
             do {
                 try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                }
-                try {
+                    sleep(1000);
                     Socket client = new Socket(NetworkProtocol.SERVER_IP_V4, NetworkProtocol.SERVER_PORT);
                     client.setSoTimeout(5 * 1000);
                     InputStream in = new BufferedInputStream(client.getInputStream());
@@ -180,12 +182,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         response = new String(buffer, 0, size, "UTF-8");
                     }
                 } catch (IOException e) {
+                } catch (InterruptedException e) {
+                    interrupt();
                 }
                 if (isGameStart(response)) {
                     break;
                 }
             } while (!isInterrupted());
-            handler.post(new StartGame(isGameStart(response)));
+            if (!isInterrupted()) {
+                handler.post(new StartGame(isGameStart(response)));
+            }
         }
 
         private class ToastInfo implements Runnable {
@@ -253,6 +259,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
+    private void stopNetworkConnection() {
+        if (networkConnection != null) {
+            networkConnection.interrupt();
+        }
+        if (mStartGameButton != null) {
+            mStartGameButton.setEnabled(true);
+        }
+    }
+
+
     private void setError() {
         if (mNumberOfPlayers != null) {
             mNumberOfPlayers.setError(getString(R.string.wrong_number_of_players));
@@ -263,10 +279,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void finish() {
-        if (networkConnetion != null) {
-            networkConnetion.interrupt();
-        }
-        super.finish();
+    public void onPause() {
+        stopNetworkConnection();
+        super.onPause();
     }
 }

@@ -25,4 +25,5 @@
     <string name="start_game">Start game</string>
     <string name="enter_number_of_players">Enter the number of players from 2 to 4</string>
     <string name="wrong_number_of_players">Wrong number of players</string>
+    <string name="stop_searching_game">Stop searching game</string>
 </resources>
