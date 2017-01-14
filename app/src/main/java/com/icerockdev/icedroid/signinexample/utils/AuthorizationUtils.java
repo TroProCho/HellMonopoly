@@ -51,4 +51,8 @@ public class AuthorizationUtils
 		String login = sp.getString(PREFERENCES_AUTHORIZED_KEY, "");
 		return !login.isEmpty();
 	}
+
+	public static String getLogin(Context context) {
+		return context.getSharedPreferences(LOGIN_PREFERENCES, Context.MODE_PRIVATE).getString(PREFERENCES_AUTHORIZED_KEY, null);
+	}
 }

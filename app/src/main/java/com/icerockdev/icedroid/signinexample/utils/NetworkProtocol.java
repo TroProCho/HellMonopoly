@@ -1,15 +1,23 @@
 package com.icerockdev.icedroid.signinexample.utils;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
-/**
- * Created by alex on 19.12.16.
- */
 public class NetworkProtocol {
     private static NetworkProtocol ourInstance = new NetworkProtocol();
     public static int SERVER_PORT = 20202;
     public static String SERVER_IP_V4 = "192.168.0.5";
+
+    public static final int TYPE_NEW_USER = 0;
+    public static final int TYPE_AUTHORIZATION = 1;
+    public static final int TYPE_LOBBY = 3;
+    public static final int TYPE_START_GAME = 4;
+
+    public static final String PROPERTY_TYPE = "Type";
+    public static final String PROPERTY_LOGIN = "Login";
+    public static final String PROPERTY_E_MAIL = "E-mail";
+    public static final String PROPERTY_PASSWORD = "Password";
+    public static final String PROPERTY_NUMBER_OF_PLAYERS = "Number";
+    public static final String PROPERTY_STATUS = "Status";
 
     public static NetworkProtocol getInstance() {
         return ourInstance;
@@ -18,35 +26,43 @@ public class NetworkProtocol {
     private NetworkProtocol() {
     }
 
-    public String registrateUser(String login, String email, String password) {
+    public String registrateUserMsg(String login, String email, String password) {
+        JsonObject regInfo = new JsonObject();
 
-        JSONObject regInfo = new JSONObject();
-        try {
-            regInfo.put("Type", 0);
-            regInfo.put("Login", login);
-            regInfo.put("E-mail", email);
-            regInfo.put("Password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        regInfo.addProperty(PROPERTY_TYPE, TYPE_NEW_USER);
+        regInfo.addProperty(PROPERTY_LOGIN, login);
+        regInfo.addProperty(PROPERTY_E_MAIL, email);
+        regInfo.addProperty(PROPERTY_PASSWORD, password);
 
-        String message = regInfo.toString();
-
-        return message;
+        return regInfo.toString();
     }
 
-    public String logInUser(String login, String password) {
-        JSONObject logInInfo = new JSONObject();
-        try {
-            logInInfo.put("Type", 1);
-            logInInfo.put("Login", login);
-            logInInfo.put("Password", password);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public String logInUserMsg(String login, String password) {
+        JsonObject logInInfo = new JsonObject();
 
-        String message = logInInfo.toString();
+        logInInfo.addProperty(PROPERTY_TYPE, TYPE_AUTHORIZATION);
+        logInInfo.addProperty(PROPERTY_LOGIN, login);
+        logInInfo.addProperty(PROPERTY_PASSWORD, password);
 
-        return message;
+        return logInInfo.toString();
+    }
+
+    public String createLobbyMsg(String login, int numberOfPlayers) {
+        JsonObject createLobbyInfo = new JsonObject();
+
+        createLobbyInfo.addProperty(PROPERTY_TYPE, TYPE_LOBBY);
+        createLobbyInfo.addProperty(PROPERTY_LOGIN, login);
+        createLobbyInfo.addProperty(PROPERTY_NUMBER_OF_PLAYERS, numberOfPlayers);
+
+        return createLobbyInfo.toString();
+    }
+
+    public String startGameMsg(String login) {
+        JsonObject startGameInfo = new JsonObject();
+
+        startGameInfo.addProperty(PROPERTY_TYPE, TYPE_START_GAME);
+        startGameInfo.addProperty(PROPERTY_LOGIN, login);
+
+        return startGameInfo.toString();
     }
 }

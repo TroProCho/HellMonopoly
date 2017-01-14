@@ -11,11 +11,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.gson.*;
 import com.icerockdev.icedroid.signinexample.R;
 import com.icerockdev.icedroid.signinexample.utils.NetworkProtocol;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -26,37 +24,35 @@ import java.net.Socket;
 /**
  * A login screen that offers login via email/password.
  */
-public class RegistrationActivity extends AppCompatActivity implements View.OnClickListener
-{
+public class RegistrationActivity extends AppCompatActivity implements View.OnClickListener {
     private TextInputLayout mEmailLayout;
     private TextInputLayout mLoginLayout;
     private TextInputLayout mPasswordLayout;
+    private Button mRegistrationBtn;
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState)
-    {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration);
 
         mEmailLayout = (TextInputLayout) findViewById(R.id.email_reg_layout);
         mLoginLayout = (TextInputLayout) findViewById(R.id.login_reg_layout);
         mPasswordLayout = (TextInputLayout) findViewById(R.id.password_reg_layout);
-        Button registrationBtn = (Button) findViewById(R.id.registration_btn);
-        registrationBtn.setOnClickListener(this);
+        mRegistrationBtn = (Button) findViewById(R.id.registration_btn);
+        mRegistrationBtn.setOnClickListener(this);
     }
 
     @Override
-    public void onClick(View v)
-    {
+    public void onClick(View v) {
         switch (v.getId()) {
             case R.id.registration_btn: {
                 if (areFieldsValid()) {
-                    String message = NetworkProtocol.getInstance().registrateUser(mLoginLayout.getEditText().getText().toString(),
+                    final String message = NetworkProtocol.getInstance().registrateUserMsg(mLoginLayout.getEditText().getText().toString(),
                             mEmailLayout.getEditText().getText().toString(),
                             mPasswordLayout.getEditText().getText().toString());
+                    mRegistrationBtn.setEnabled(false);
                     (new RegNewUserTask()).execute(message);
-                }
-                else {
+                } else {
                     setError();
                 }
                 break;
@@ -64,8 +60,8 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    private void onRegisteredCompleted(boolean status)
-    {
+    private void onRegisteredCompleted(boolean status) {
+        mRegistrationBtn.setEnabled(true);
         if (status) {
             (Toast.makeText(getApplicationContext(), "Registration complete", Toast.LENGTH_LONG)).show();
             finish();
@@ -75,8 +71,7 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
     }
 
     //	It checks the email field
-    private boolean areFieldsValid()
-    {
+    private boolean areFieldsValid() {
         return (mEmailLayout != null &&
                 mEmailLayout.getEditText() != null &&
                 !TextUtils.isEmpty(mEmailLayout.getEditText().getText()) &&
@@ -89,8 +84,7 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
                         !TextUtils.isEmpty(mPasswordLayout.getEditText().getText()));
     }
 
-    private void setError()
-    {
+    private void setError() {
         if (mEmailLayout != null) {
             mEmailLayout.setError(getString(R.string.email_is_not_valid_error_message));
         }
@@ -100,7 +94,6 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
         @Override
         protected String doInBackground(String... message) {
             String response = null;
-
             try {
                 Socket client = new Socket(NetworkProtocol.SERVER_IP_V4, NetworkProtocol.SERVER_PORT);
                 client.setSoTimeout(5 * 1000);
@@ -116,7 +109,7 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
                     response = new String(buffer, 0, size, "UTF-8");
                 }
             } catch (IOException e) {
-                publishProgress("Network error");
+                publishProgress("Server not respond");
             }
 
             return response;
@@ -130,16 +123,11 @@ public class RegistrationActivity extends AppCompatActivity implements View.OnCl
         @Override
         protected void onPostExecute(String result) {
             boolean status = false;
-            try {
-                if (result != null) {
-                    JSONObject js = new JSONObject(result);
-                    if (js.getInt("Type") == 0) {
-                        status = js.getBoolean("Status");
-                    }
+            if (result != null) {
+                JsonObject js = new JsonParser().parse(result).getAsJsonObject();
+                if (js.get("Type").getAsInt() == 0) {
+                    status = js.get("Status").getAsBoolean();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                status = false;
             }
             onRegisteredCompleted(status);
         }

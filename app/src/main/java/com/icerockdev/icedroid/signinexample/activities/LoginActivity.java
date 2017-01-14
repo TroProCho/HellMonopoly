@@ -11,12 +11,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.icerockdev.icedroid.signinexample.R;
 import com.icerockdev.icedroid.signinexample.utils.AuthorizationUtils;
 import com.icerockdev.icedroid.signinexample.utils.NetworkProtocol;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -30,6 +29,7 @@ import java.net.Socket;
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
     private TextInputLayout mLoginLayout;
     private TextInputLayout mPasswordLayout;
+    private Button mSignInBtn;
     private String login = null;
 
     @Override
@@ -39,9 +39,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         mLoginLayout = (TextInputLayout) findViewById(R.id.login_log_layout);
         mPasswordLayout = (TextInputLayout) findViewById(R.id.password_log_layout);
-        Button signInButton = (Button) findViewById(R.id.sign_in_button);
+        mSignInBtn = (Button) findViewById(R.id.sign_in_button);
         Button signUpButton = (Button) findViewById(R.id.reg_new_user_button);
-        signInButton.setOnClickListener(this);
+        mSignInBtn.setOnClickListener(this);
         signUpButton.setOnClickListener(this);
     }
 
@@ -51,8 +51,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             case R.id.sign_in_button: {
                 if (areFieldsValid()) {
                     login = mLoginLayout.getEditText().getText().toString();
-                    String message = NetworkProtocol.getInstance().logInUser(login,
+                    String message = NetworkProtocol.getInstance().logInUserMsg(login,
                             mPasswordLayout.getEditText().getText().toString());
+                    mSignInBtn.setEnabled(false);
                     (new LogInUserTask()).execute(message);
                 } else {
                     setError();
@@ -69,6 +70,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     //	If user is authorized we launch the main activity
     private void onLoginCompleted(boolean status) {
+        mSignInBtn.setEnabled(true);
         if (status) {
             (Toast.makeText(getApplicationContext(), "Authorisation complete", Toast.LENGTH_LONG)).show();
             AuthorizationUtils.setAuthorized(this, login);
@@ -117,9 +119,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     response = new String(buffer, 0, size, "UTF-8");
                 }
             } catch (IOException e) {
-                publishProgress("Network error");
+                publishProgress("Server not respond");
             }
-
+            response = "{Type:1,Status:true}";
             return response;
         }
 
@@ -131,16 +133,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         @Override
         protected void onPostExecute(String result) {
             boolean status = false;
-            try {
-                if (result != null) {
-                    JSONObject js = new JSONObject(result);
-                    if (js.getInt("Type") == 1) {
-                        status = js.getBoolean("Status");
-                    }
+            if (result != null) {
+                JsonObject js = new JsonParser().parse(result).getAsJsonObject();
+                if (js.get("Type").getAsInt() == 1) {
+                    status = js.get("Status").getAsBoolean();
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();;
-                status = false;
             }
             onLoginCompleted(status);
         }
