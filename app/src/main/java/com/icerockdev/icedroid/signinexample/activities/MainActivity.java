@@ -189,9 +189,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     break;
                 }
             } while (!isInterrupted());
-            if (!isInterrupted()) {
-                handler.post(new StartGame(isGameStart(response)));
-            }
+            handler.post(new StartGame(isGameStart(response)));
         }
 
         private class ToastInfo implements Runnable {
